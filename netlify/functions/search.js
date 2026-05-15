@@ -4,19 +4,17 @@ exports.handler = async (event) => {
     const query = event.queryStringParameters.q;
 
     try {
-        // This specific URL tells Google to send the simple version 
-        // and avoid looping back to your own site
-        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&gbv=1`;
+        // We use a specific Google URL that is easier to load in an iframe
+        const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&gbv=1`;
         
-        const response = await axios.get(url, {
+        const response = await axios.get(googleUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
             }
         });
 
-        // We clean the data slightly so Google's links don't try to open 
-        // inside your small window
-        let cleanHtml = response.data.replace(/href="\/search/g, 'href="https://www.google.com/search');
+        // This line is the "Magic": it fixes Google's internal links so they don't loop back to you
+        let formattedContent = response.data.replace(/href="\/search/g, 'href="https://www.google.com/search');
 
         return {
             statusCode: 200,
@@ -24,13 +22,12 @@ exports.handler = async (event) => {
                 "Content-Type": "text/html",
                 "Access-Control-Allow-Origin": "*"
             },
-            body: cleanHtml
+            body: formattedContent
         };
     } catch (error) {
-        console.error(error);
         return {
             statusCode: 500,
-            body: "Search failed. Please try a different word."
+            body: "The search engine is sleepy. Please try again in 10 seconds."
         };
     }
 };
