@@ -1,90 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Portal</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f4f7f6;
-        }
-        .search-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 700px;
-        }
-        h1 { color: #333; margin-top: 0; }
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 14px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        button {
-            padding: 14px 25px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        #results { 
-            margin-top: 20px; 
-            text-align: left;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        .result-item { margin-bottom: 20px; }
-        .result-item h3 { margin: 0; color: #007bff; }
-        .result-item p { font-size: 14px; color: #555; line-height: 1.6; }
-    </style>
-</head>
-<body>
-
-<div class="search-container">
-    <h1>Wikipedia Search</h1>
-    <form id="searchForm">
-        <div class="input-group">
-            <input type="text" id="query" placeholder="Search for a topic..." required>
-            <button type="submit">Search</button>
-        </div>
-    </form>
-    <div id="results"></div>
-</div>
-
 <script>
+    const resultsDiv = document.getElementById('results');
+
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const query = document.getElementById('query').value;
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = "Searching...";
+        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching Wikipedia...</p>";
 
         try {
             const response = await fetch('/api/search?q=' + encodeURIComponent(query));
             const html = await response.text();
             resultsDiv.innerHTML = html;
+
+            // Add "Full View" logic to all the new links
+            document.querySelectorAll('.wiki-link').forEach(link => {
+                link.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    const pageId = link.getAttribute('data-id');
+                    resultsDiv.innerHTML = "<p style='text-align:center;'>Loading full article...</p>";
+                    
+                    // Fetch the full content for that specific page
+                    const fullRes = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&pageid=${pageId}&prop=text&origin=*`);
+                    const fullData = await fullRes.json();
+                    
+                    resultsDiv.innerHTML = `
+                        <button onclick="location.reload()" style="margin-bottom:10px; padding:5px 10px; background:#666;">← Back to Search</button>
+                        <div class="full-article">${fullData.parse.text['*']}</div>
+                    `;
+                });
+            });
         } catch (err) {
             resultsDiv.innerHTML = "Error loading results.";
         }
     });
 </script>
-
-</body>
-</html>
