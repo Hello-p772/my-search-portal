@@ -4,32 +4,35 @@
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const query = document.getElementById('query').value;
-        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching Wikipedia...</p>";
+        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching...</p>";
 
         try {
-            const response = await fetch('/api/search?q=' + encodeURIComponent(query));
+            // We go DIRECTLY to the function path to avoid redirect rules
+            const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
+            
+            if (!response.ok) throw new Error("Server error: " + response.status);
+            
             const html = await response.text();
             resultsDiv.innerHTML = html;
 
-            // Add "Full View" logic to all the new links
+            // Re-attach the Wikipedia internal view logic
             document.querySelectorAll('.wiki-link').forEach(link => {
                 link.addEventListener('click', async (event) => {
                     event.preventDefault();
                     const pageId = link.getAttribute('data-id');
                     resultsDiv.innerHTML = "<p style='text-align:center;'>Loading full article...</p>";
                     
-                    // Fetch the full content for that specific page
                     const fullRes = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&pageid=${pageId}&prop=text&origin=*`);
                     const fullData = await fullRes.json();
                     
                     resultsDiv.innerHTML = `
-                        <button onclick="location.reload()" style="margin-bottom:10px; padding:5px 10px; background:#666;">← Back to Search</button>
-                        <div class="full-article">${fullData.parse.text['*']}</div>
+                        <button onclick="location.reload()" style="margin-bottom:15px; padding:8px 15px; cursor:pointer;">← Back to Search</button>
+                        <div style="font-family:sans-serif; line-height:1.6;">${fullData.parse.text['*']}</div>
                     `;
                 });
             });
         } catch (err) {
-            resultsDiv.innerHTML = "Error loading results.";
+            resultsDiv.innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
         }
     });
 </script>
