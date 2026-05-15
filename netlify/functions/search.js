@@ -1,38 +1,28 @@
 const axios = require('axios');
 
 exports.handler = async (event) => {
-    const query = event.queryStringParameters.q;
+  const query = event.queryStringParameters.q || 'test';
+  
+  try {
+    // We are using the "Mobile" search link which is much harder to break
+    const response = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(query)}&hl=en`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Mobile/15E148 Safari/604.1'
+      }
+    });
 
-    if (!query) {
-        return { statusCode: 400, body: "No query" };
-    }
-
-    try {
-        // We use the 'mobile' version of Google because it's lighter and easier to proxy
-        const response = await axios.get('https://www.google.com/search', {
-            params: { q: query, gbv: "1" },
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36'
-            }
-        });
-
-        // This removes Google's "protection" that prevents it from being shown in frames
-        let html = response.data;
-        html = html.replace(/href="\//g, 'href="https://www.google.com/');
-
-        return {
-            statusCode: 200,
-            headers: {
-                "Content-Type": "text/html",
-                "Access-Control-Allow-Origin": "*",
-                "X-Frame-Options": "ALLOWALL" 
-            },
-            body: html
-        };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: "Error fetching results. Google might be blocking the request."
-        };
-    }
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "text/html",
+        "Access-Control-Allow-Origin": "*"
+      },
+      body: response.data
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: "Error: Could not reach Google. " + error.message
+    };
+  }
 };
