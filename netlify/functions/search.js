@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 exports.handler = async (event) => {
     const query = event.queryStringParameters.q;
 
@@ -11,17 +9,19 @@ exports.handler = async (event) => {
         // Wikipedia API URL
         const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&origin=*`;
         
-        const response = await axios.get(url);
+        // Using built-in fetch instead of Axios
+        const response = await fetch(url);
+        const data = await response.json();
         
-        if (!response.data || !response.data.query) {
+        if (!data || !data.query) {
             return { 
                 statusCode: 200, 
                 headers: { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" },
-                body: "<p style='text-align:center;'>No results found. Try a different word!</p>" 
+                body: "<p style='text-align:center;'>No results found. Try a different topic!</p>" 
             };
         }
 
-        const pages = response.data.query.pages;
+        const pages = data.query.pages;
         let htmlResults = "";
         
         Object.keys(pages).forEach(id => {
@@ -46,9 +46,10 @@ exports.handler = async (event) => {
             body: htmlResults
         };
     } catch (error) {
+        console.error(error);
         return { 
-            statusCode: 500, 
-            body: "Search failed. Check your internet connection." 
+            statusCode: 200, // Keep 200 to show the error message on screen
+            body: "The search engine is having a moment. Please refresh and try again." 
         };
     }
 };
