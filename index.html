@@ -1,38 +1,49 @@
-<script>
-    const resultsDiv = document.getElementById('results');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f7f6; }
+        .search-container { background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 700px; text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        input[type="text"] { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { padding: 14px 25px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        #results { margin-top: 20px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
+        .result-item { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
 
+<div class="search-container">
+    <h1>Wikipedia Search</h1>
+    <form id="searchForm">
+        <div class="input-group">
+            <input type="text" id="query" placeholder="Search for a topic..." required>
+            <button type="submit">Search</button>
+        </div>
+    </form>
+    <div id="results"></div>
+</div>
+
+<script>
     document.getElementById('searchForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const query = document.getElementById('query').value;
+        const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = "<p style='text-align:center;'>Searching...</p>";
 
         try {
-            // We go DIRECTLY to the function path to avoid redirect rules
+            // DIRECT PATH: Avoids redirect rules
             const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
-            
-            if (!response.ok) throw new Error("Server error: " + response.status);
-            
             const html = await response.text();
             resultsDiv.innerHTML = html;
-
-            // Re-attach the Wikipedia internal view logic
-            document.querySelectorAll('.wiki-link').forEach(link => {
-                link.addEventListener('click', async (event) => {
-                    event.preventDefault();
-                    const pageId = link.getAttribute('data-id');
-                    resultsDiv.innerHTML = "<p style='text-align:center;'>Loading full article...</p>";
-                    
-                    const fullRes = await fetch(`https://en.wikipedia.org/w/api.php?action=parse&format=json&pageid=${pageId}&prop=text&origin=*`);
-                    const fullData = await fullRes.json();
-                    
-                    resultsDiv.innerHTML = `
-                        <button onclick="location.reload()" style="margin-bottom:15px; padding:8px 15px; cursor:pointer;">← Back to Search</button>
-                        <div style="font-family:sans-serif; line-height:1.6;">${fullData.parse.text['*']}</div>
-                    `;
-                });
-            });
         } catch (err) {
-            resultsDiv.innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
+            resultsDiv.innerHTML = "<p style='color:red;'>Error connecting to brain.</p>";
         }
     });
 </script>
+
+</body>
+</html>
