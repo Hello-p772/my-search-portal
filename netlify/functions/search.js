@@ -1,53 +1,40 @@
 exports.handler = async (event) => {
     const query = event.queryStringParameters.q;
 
-    // Check if the user actually typed something
     if (!query) {
-        return { 
-            statusCode: 400, 
-            body: "Please enter a search term." 
-        };
+        return { statusCode: 400, body: "No query provided." };
     }
 
     try {
-        // Wikipedia Search API URL
-        // &gsrlimit=5 gives us the top 5 results
-        // &origin=* is vital for letting the browser see the data
         const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&origin=*`;
         
+        // We use globalThis.fetch to ensure Netlify finds the built-in fetch command
         const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`Wikipedia responded with status: ${response.status}`);
+        }
+
         const data = await response.json();
         
-        // If Wikipedia finds nothing
         if (!data || !data.query) {
             return { 
                 statusCode: 200, 
-                headers: { 
-                    "Content-Type": "text/html", 
-                    "Access-Control-Allow-Origin": "*" 
-                },
-                body: "<p style='text-align:center; padding:20px;'>No results found. Try a different topic!</p>" 
+                headers: { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" },
+                body: "<p style='text-align:center;'>No results found. Try another word.</p>" 
             };
         }
 
         const pages = data.query.pages;
         let htmlResults = "";
         
-        // Loop through the pages found and build the HTML
         Object.keys(pages).forEach(id => {
             const page = pages[id];
             htmlResults += `
-                <div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                    <h3 style="margin: 0; color: #007bff; font-family: sans-serif;">${page.title}</h3>
-                    <p style="font-size: 14px; color: #444; line-height: 1.6; margin: 10px 0; font-family: sans-serif;">
-                        ${page.extract ? page.extract.substring(0, 250) + '...' : 'No summary available.'}
-                    </p>
-                    <a href="#" 
-                       class="wiki-link" 
-                       data-id="${page.pageid}" 
-                       style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 13px; font-family: sans-serif;">
-                       Read full article inside portal →
-                    </a>
+                <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; font-family: sans-serif;">
+                    <h3 style="margin: 0; color: #007bff;">${page.title}</h3>
+                    <p style="font-size: 14px; color: #444;">${page.extract ? page.extract.substring(0, 200) + '...' : ''}</p>
+                    <a href="#" class="wiki-link" data-id="${page.pageid}" style="color: #007bff; font-weight: bold; text-decoration: none;">Read More inside portal →</a>
                 </div>
             `;
         });
@@ -62,10 +49,11 @@ exports.handler = async (event) => {
         };
 
     } catch (error) {
-        console.error("Brain Error:", error);
+        // This is the Safety Net: It sends the error to your screen instead of a white page
         return { 
             statusCode: 200, 
-            body: "<p style='color:red;'>The search engine is having a moment. Please refresh and try again.</p>" 
+            headers: { "Content-Type": "text/html" },
+            body: `<div style="color:red; padding:20px;"><strong>Brain Error:</strong> ${error.message}</div>` 
         };
     }
 };
