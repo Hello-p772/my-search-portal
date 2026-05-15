@@ -3,16 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Search Portal</title>
+    <title>Search Portal</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f4f4f9; }
-        .search-container { text-align: center; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 500px; }
-        h1 { color: #333; margin-bottom: 20px; }
-        input[type="text"] { width: 80%; padding: 12px; border: 2px solid #ddd; border-radius: 6px; outline: none; font-size: 16px; transition: border-color 0.3s; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+        .search-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 800px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+        }
         input[type="text"]:focus { border-color: #007bff; }
-        button { padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-left: 10px; transition: background 0.3s; }
+        button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
         button:hover { background-color: #0056b3; }
-        #results { margin-top: 20px; width: 100%; text-align: left; }
+        #results { 
+            margin-top: 20px; 
+            width: 100%; 
+            text-align: left; 
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
     </style>
 </head>
 <body>
@@ -32,15 +75,28 @@
         const query = document.getElementById('query').value;
         const resultsDiv = document.getElementById('results');
         
-        resultsDiv.innerHTML = "Searching...";
+        resultsDiv.innerHTML = "<p>Loading results from Google...</p>";
 
         try {
-            // This calls your /api/search.js file
-           const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
+            // This talks to your Netlify function
+            const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
+            
+            if (!response.ok) throw new Error("Search failed on the server.");
+            
             const html = await response.text();
-            resultsDiv.innerHTML = html;
+            
+            // Create a safe window to show the Google HTML
+            resultsDiv.innerHTML = ""; 
+            const iframe = document.createElement('iframe');
+            resultsDiv.appendChild(iframe);
+            
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(html);
+            doc.close();
+            
         } catch (err) {
-            resultsDiv.innerHTML = "Error: " + err.message;
+            resultsDiv.innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
         }
     });
 </script>
