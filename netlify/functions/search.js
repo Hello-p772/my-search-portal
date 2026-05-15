@@ -1,37 +1,33 @@
 const axios = require('axios');
 
 exports.handler = async (event) => {
-    const query = event.queryStringParameters.q || 'test';
+    const query = event.queryStringParameters.q;
 
     try {
-        // We use a very basic search URL
-        const url = `https://www.google.com/search?q=${encodeURIComponent(query)}&gbv=1`;
+        // Using DuckDuckGo's "HTML" version - it's much more reliable for portals
+        const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
         
         const response = await axios.get(url, {
-            timeout: 5000, // If Google takes too long, stop trying
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebkit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
             }
         });
 
-        if (!response.data) {
-            return { statusCode: 200, body: "Google sent back an empty page." };
-        }
+        // Fix the links so they work in your portal
+        let html = response.data.replace(/href="\//g, 'href="https://duckduckgo.com/');
 
         return {
             statusCode: 200,
-            headers: { 
+            headers: {
                 "Content-Type": "text/html",
-                "Access-Control-Allow-Origin": "*" 
+                "Access-Control-Allow-Origin": "*"
             },
-            body: response.data
+            body: html
         };
-
     } catch (error) {
-        // This will tell us if Google is blocking us or if axios is broken
         return {
-            statusCode: 200, // We keep this 200 so we can see the message
-            body: "Brain Error: " + error.message
+            statusCode: 200, // Keep 200 so we can read the message
+            body: "Search is currently busy. Error: " + error.message
         };
     }
 };
