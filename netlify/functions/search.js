@@ -1,11 +1,23 @@
 const axios = require('axios');
 
-module.exports = async (req, res) => {
-    const { q } = req.query;
+exports.handler = async (event, context) => {
+    const query = event.queryStringParameters.q;
+
     try {
-        const response = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(q)}`);
-        res.status(200).send(response.data);
+        const response = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
+        
+        return {
+            statusCode: 200,
+            headers: {
+                "Content-Type": "text/html",
+                "Access-Control-Allow-Origin": "*" 
+            },
+            body: response.data,
+        };
     } catch (error) {
-        res.status(500).send("Search failed.");
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "Search failed" }),
+        };
     }
 };

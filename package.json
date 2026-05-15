@@ -1,21 +1,5 @@
-const axios = require('axios');
-
-exports.handler = async (event, context) => {
-    // Get the search query from the URL (?q=dogs)
-    const query = event.queryStringParameters.q;
-
-    try {
-        // This is the "Proxy" part that talks to Google for you
-        const response = await axios.get(`https://www.google.com/search?q=${encodeURIComponent(query)}`);
-        
-        return {
-            statusCode: 200,
-            body: response.data, // This sends the Google HTML back to your site
-        };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: "Search failed" }),
-        };
-    }
-};
+{
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
