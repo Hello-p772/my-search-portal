@@ -7,11 +7,16 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f4f7f6; }
         .search-container { background-color: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 700px; text-align: center; }
+        h1 { color: #333; margin-top: 0; }
         .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        input[type="text"] { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input[type="text"] { flex: 1; padding: 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+        input[type="text"]:focus { border-color: #007bff; }
         button { padding: 14px 25px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        #results { margin-top: 20px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; }
-        .result-item { margin-bottom: 20px; }
+        #results { margin-top: 20px; text-align: left; border-top: 1px solid #eee; padding-top: 20px; min-height: 100px; }
+        .result-item { margin-bottom: 25px; border-bottom: 1px solid #fafafa; padding-bottom: 15px; }
+        .result-item h3 { margin: 0; color: #007bff; }
+        .result-item p { font-size: 14px; color: #555; line-height: 1.6; margin: 10px 0; }
+        .result-item a { color: #007bff; text-decoration: none; font-weight: bold; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -32,15 +37,16 @@
         e.preventDefault();
         const query = document.getElementById('query').value;
         const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching...</p>";
+        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching Wikipedia...</p>";
 
         try {
-            // DIRECT PATH: Avoids redirect rules
+            // Fetch directly from the function path
             const response = await fetch('/.netlify/functions/search?q=' + encodeURIComponent(query));
+            if (!response.ok) throw new Error("Connection failed");
             const html = await response.text();
             resultsDiv.innerHTML = html;
         } catch (err) {
-            resultsDiv.innerHTML = "<p style='color:red;'>Error connecting to brain.</p>";
+            resultsDiv.innerHTML = "<p style='color:red; text-align:center;'>Error: Could not reach the search brain.</p>";
         }
     });
 </script>

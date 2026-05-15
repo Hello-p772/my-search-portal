@@ -2,7 +2,7 @@ exports.handler = async (event) => {
     const query = event.queryStringParameters.q;
 
     if (!query) {
-        return { statusCode: 400, body: "No query provided." };
+        return { statusCode: 200, body: "Please enter a search term." };
     }
 
     try {
@@ -15,7 +15,7 @@ exports.handler = async (event) => {
             return { 
                 statusCode: 200, 
                 headers: { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" },
-                body: "<p style='text-align:center;'>No results found. Try another word.</p>" 
+                body: "<p style='text-align:center;'>No results found. Try a different topic!</p>" 
             };
         }
 
@@ -25,10 +25,10 @@ exports.handler = async (event) => {
         Object.keys(pages).forEach(id => {
             const page = pages[id];
             htmlResults += `
-                <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-                    <h3 style="margin: 0; color: #007bff;">${page.title}</h3>
-                    <p style="font-size: 14px; color: #444; line-height: 1.5;">${page.extract ? page.extract.substring(0, 200) + '...' : ''}</p>
-                    <a href="https://en.wikipedia.org/?curid=${page.pageid}" target="_blank" style="color: #007bff; font-weight: bold; text-decoration: none; font-size: 13px;">Open Full Article →</a>
+                <div class="result-item">
+                    <h3>${page.title}</h3>
+                    <p>${page.extract ? page.extract.substring(0, 250) + '...' : 'No summary available.'}</p>
+                    <a href="https://en.wikipedia.org/?curid=${page.pageid}" target="_blank">Read full article on Wikipedia →</a>
                 </div>
             `;
         });
@@ -43,7 +43,7 @@ exports.handler = async (event) => {
         return { 
             statusCode: 200, 
             headers: { "Content-Type": "text/html" },
-            body: `<p style="color:red;">Brain Error: ${error.message}</p>` 
+            body: `<p style="color:red;">Error: ${error.message}</p>` 
         };
     }
 };
