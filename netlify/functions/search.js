@@ -1,38 +1,90 @@
-const axios = require('axios');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+        .search-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 700px;
+        }
+        h1 { color: #333; margin-top: 0; }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 14px 25px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #results { 
+            margin-top: 20px; 
+            text-align: left;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .result-item { margin-bottom: 20px; }
+        .result-item h3 { margin: 0; color: #007bff; }
+        .result-item p { font-size: 14px; color: #555; line-height: 1.6; }
+    </style>
+</head>
+<body>
 
-exports.handler = async (event) => {
-    const query = event.queryStringParameters.q;
+<div class="search-container">
+    <h1>Wikipedia Search</h1>
+    <form id="searchForm">
+        <div class="input-group">
+            <input type="text" id="query" placeholder="Search for a topic..." required>
+            <button type="submit">Search</button>
+        </div>
+    </form>
+    <div id="results"></div>
+</div>
 
-    try {
-        // Wikipedia's official API - Fast, free, and NO CAPTCHAS
-        const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro&explaintext&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5`;
-        
-        const response = await axios.get(url);
-        const pages = response.data.query.pages;
-        
-        // Let's turn that data into nice HTML for your portal
-        let htmlResults = `<h2>Results for "${query}"</h2>`;
-        
-        Object.keys(pages).forEach(id => {
-            const page = pages[id];
-            htmlResults += `
-                <div style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
-                    <h3>${page.title}</h3>
-                    <p>${page.extract ? page.extract.substring(0, 200) + '...' : 'No summary available.'}</p>
-                    <a href="https://en.wikipedia.org/?curid=${page.pageid}" target="_blank" style="color: #007bff;">Read more on Wikipedia</a>
-                </div>
-            `;
-        });
+<script>
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = document.getElementById('query').value;
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = "Searching...";
 
-        return {
-            statusCode: 200,
-            headers: { "Content-Type": "text/html", "Access-Control-Allow-Origin": "*" },
-            body: htmlResults
-        };
-    } catch (error) {
-        return {
-            statusCode: 200,
-            body: "<h3>No results found. Try a different word!</h3>"
-        };
-    }
-};
+        try {
+            const response = await fetch('/api/search?q=' + encodeURIComponent(query));
+            const html = await response.text();
+            resultsDiv.innerHTML = html;
+        } catch (err) {
+            resultsDiv.innerHTML = "Error loading results.";
+        }
+    });
+</script>
+
+</body>
+</html>
