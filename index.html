@@ -1,3 +1,9 @@
+I've got you. Here is the entire index.html file, fully updated for the Wikipedia version.
+
+I’ve removed the iframe logic (since we don't need a "mini-window" for simple text) and updated the script to use the /api/search path we set up in your netlify.toml.
+
+Copy and Paste this into index.html:
+HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,56 +12,69 @@
     <title>Search Portal</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             background-color: #f4f7f6;
         }
         .search-container {
             background-color: white;
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             text-align: center;
             width: 90%;
-            max-width: 800px;
+            max-width: 700px;
+            margin: 20px;
+        }
+        h1 { color: #333; margin-bottom: 25px; }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         input[type="text"] {
-            width: 70%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
             font-size: 16px;
             outline: none;
+            transition: border-color 0.3s;
         }
         input[type="text"]:focus { border-color: #007bff; }
         button {
-            padding: 12px 20px;
+            padding: 14px 25px;
             background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            margin-left: 10px;
+            font-weight: bold;
             transition: background-color 0.3s;
         }
         button:hover { background-color: #0056b3; }
         #results { 
-            margin-top: 20px; 
-            width: 100%; 
+            margin-top: 30px; 
             text-align: left; 
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
         }
-        iframe {
-            width: 100%;
-            height: 500px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background: white;
+        /* Styling for the Wikipedia Results */
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
         }
+        .result-item h3 { margin: 0 0 10px 0; color: #007bff; }
+        .result-item p { color: #555; font-size: 14px; line-height: 1.5; }
+        .result-item a { text-decoration: none; font-weight: bold; font-size: 13px; }
+        .result-item a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -63,8 +82,10 @@
 <div class="search-container">
     <h1>Search Portal</h1>
     <form id="searchForm">
-        <input type="text" id="query" placeholder="What are you looking for?" required>
-        <button type="submit">Search</button>
+        <div class="input-group">
+            <input type="text" id="query" placeholder="Search for anything..." required>
+            <button type="submit">Search</button>
+        </div>
     </form>
     <div id="results"></div>
 </div>
@@ -75,28 +96,21 @@
         const query = document.getElementById('query').value;
         const resultsDiv = document.getElementById('results');
         
-        resultsDiv.innerHTML = "<p>Loading results from Google...</p>";
+        resultsDiv.innerHTML = "<p style='text-align:center;'>Searching Wikipedia...</p>";
 
         try {
-            // This talks to your Netlify function
+            // This matches the redirect we put in netlify.toml
             const response = await fetch('/api/search?q=' + encodeURIComponent(query));
             
-            if (!response.ok) throw new Error("Search failed on the server.");
+            if (!response.ok) throw new Error("Search failed to connect.");
             
             const html = await response.text();
             
-            // Create a safe window to show the Google HTML
-            resultsDiv.innerHTML = ""; 
-            const iframe = document.createElement('iframe');
-            resultsDiv.appendChild(iframe);
-            
-            const doc = iframe.contentWindow.document;
-            doc.open();
-            doc.write(html);
-            doc.close();
+            // Clean display: No more iframes!
+            resultsDiv.innerHTML = html;
             
         } catch (err) {
-            resultsDiv.innerHTML = "<p style='color:red;'>Error: " + err.message + "</p>";
+            resultsDiv.innerHTML = "<p style='color:red; text-align:center;'>Error: " + err.message + "</p>";
         }
     });
 </script>
